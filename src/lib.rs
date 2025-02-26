@@ -221,7 +221,6 @@ async fn load_macaroon(
 ///
 /// If you have a motivating use case for use of direct data feel free to open an issue and
 /// explain.
-#[cfg_attr(feature = "tracing", tracing::instrument(name = "Connecting to LND"))]
 pub async fn connect<CP, MP>(
     address: String,
     cert_file: CP,
@@ -237,6 +236,53 @@ where
         .enable_http2()
         .build();
     let macaroon = load_macaroon(macaroon_file).await?;
+
+    let svc = InterceptedService::new(
+        hyper::Client::builder().build(connector),
+        MacaroonInterceptor { macaroon },
+    );
+    let uri =
+        Uri::from_str(address.as_str()).map_err(|error| InternalConnectError::InvalidAddress {
+            address,
+            error: Box::new(error),
+        })?;
+
+    let client = Client {
+        #[cfg(feature = "lightningrpc")]
+        lightning: lnrpc::lightning_client::LightningClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "walletrpc")]
+        wallet: walletrpc::wallet_kit_client::WalletKitClient::with_origin(
+            svc.clone(),
+            uri.clone(),
+        ),
+        #[cfg(feature = "peersrpc")]
+        peers: peersrpc::peers_client::PeersClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "signrpc")]
+        signer: signrpc::signer_client::SignerClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "versionrpc")]
+        version: verrpc::versioner_client::VersionerClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "routerrpc")]
+        router: routerrpc::router_client::RouterClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "invoicesrpc")]
+        invoices: invoicesrpc::invoices_client::InvoicesClient::with_origin(
+            svc.clone(),
+            uri.clone(),
+        ),
+        #[cfg(feature = "staterpc")]
+        state: staterpc::state_client::StateClient::with_origin(svc.clone(), uri.clone()),
+    };
+    Ok(client)
+}
+
+pub async fn connect_root<CP, MP>(
+    address: String,
+    macaroon: String,
+) -> Result<Client, ConnectError> {
+    let connector = hyper_rustls::HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_or_http()
+        .enable_http2()
+        .build();
 
     let svc = InterceptedService::new(
         hyper::Client::builder().build(connector),
