@@ -274,10 +274,7 @@ where
     Ok(client)
 }
 
-pub async fn connect_root<CP, MP>(
-    address: String,
-    macaroon: String,
-) -> Result<Client, ConnectError> {
+pub async fn connect_root(address: String, macaroon: String) -> Result<Client, ConnectError> {
     let connector = hyper_rustls::HttpsConnectorBuilder::new()
         .with_native_roots()
         .https_or_http()
