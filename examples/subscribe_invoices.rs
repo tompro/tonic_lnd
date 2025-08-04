@@ -46,7 +46,7 @@ async fn main() {
 
         // If this invoice was Settled we can do something with it
         if state == fedimint_tonic_lnd::lnrpc::invoice::InvoiceState::Settled {
-            println!("{:?}", invoice);
+            println!("{invoice:?}");
         }
     }
 }

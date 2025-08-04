@@ -53,7 +53,7 @@ async fn main() {
         .await
         .expect("Failed to get payment")
     {
-        println!("{:?}", payment);
+        println!("{payment:?}");
     } else {
         println!("Payment not found");
     }

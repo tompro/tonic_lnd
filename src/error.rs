@@ -40,7 +40,7 @@ impl fmt::Display for ConnectError {
         match &self.internal {
             ReadFile { file, .. } => write!(f, "failed to read file {}", file.display()),
             ParseCert { file, .. } => write!(f, "failed to parse certificate {}", file.display()),
-            InvalidAddress { address, .. } => write!(f, "invalid address {}", address),
+            InvalidAddress { address, .. } => write!(f, "invalid address {address}"),
         }
     }
 }
