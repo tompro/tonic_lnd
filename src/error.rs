@@ -31,6 +31,9 @@ pub(crate) enum InternalConnectError {
         address: String,
         error: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
+    SetupTls {
+        error: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
 }
 
 impl fmt::Display for ConnectError {
@@ -41,6 +44,7 @@ impl fmt::Display for ConnectError {
             ReadFile { file, .. } => write!(f, "failed to read file {}", file.display()),
             ParseCert { file, .. } => write!(f, "failed to parse certificate {}", file.display()),
             InvalidAddress { address, .. } => write!(f, "invalid address {address}"),
+            SetupTls { .. } => write!(f, "failed to setup TLS"),
         }
     }
 }
@@ -53,6 +57,7 @@ impl std::error::Error for ConnectError {
             ReadFile { error, .. } => Some(error),
             ParseCert { error, .. } => Some(error),
             InvalidAddress { error, .. } => Some(&**error),
+            SetupTls { error } => Some(&**error),
         }
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "fedimint-tonic-lnd"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.65.0"
 description = "An async library implementing LND RPC via tonic and prost. Forked from https://github.com/Kixunil/tonic_lnd"
@@ -35,29 +35,47 @@ all = [
   "staterpc",
 ]
 default = ["all"]
+tls-ring = ["tonic/tls-ring"]
+tls-aws-lc = ["tonic/tls-aws-lc"]
+tracing = []
 
 [dependencies]
 hex = "0.4.3"
-http-body = "0.4.6"
-hyper = { version = "0.14.32", features = ["client"], default-features = false }
-prost = "0.12.6"
-rustls = { version = "0.21.12", features = [
-  "dangerous_configuration",
-], default-features = false }
-rustls-pemfile = "1.0.4"
-hyper-rustls = { version = "0.24.2", features = [
-  "acceptor",
+# <<<<<<< HEAD
+# http-body = "0.4.6"
+# hyper = { version = "0.14.32", features = ["client"], default-features = false }
+# prost = "0.12.6"
+# rustls = { version = "0.21.12", features = [
+#   "dangerous_configuration",
+# ], default-features = false }
+# rustls-pemfile = "1.0.4"
+# hyper-rustls = { version = "0.24.2", features = [
+#   "acceptor",
+#   "http2",
+#   "tls12",
+#   "rustls-native-certs",
+# ], default-features = false }
+# tonic = { version = "0.10.2", features = ["transport", "tls"] }
+# tokio = { version = "1.43.0", features = ["fs"] }
+# =======
+hyper = { version = "1", features = ["client"], default-features = false }
+hyper-util = { version = "0.1.14" }
+prost = "0.13.0"
+rustls = { version = "0.23.0", features = ["std"], default-features = false }
+rustls-pemfile = "1.0.0"
+hyper-rustls = { version = "0.27.7", features = [
   "http2",
   "tls12",
-  "rustls-native-certs",
+  "ring",
+  "native-tokio",
 ], default-features = false }
-tonic = { version = "0.10.2", features = ["transport", "tls"] }
-tokio = { version = "1.43.0", features = ["fs"] }
+tonic = { version = "0.13.1", features = ["transport"] }
+tokio = { version = "1.32.0", features = ["fs"] }
+# >>>>>>> upstream/master
 tokio-stream = { version = "0.1", features = ["net"] }
-tower = "0.4.13"
 
 [build-dependencies]
-tonic-build = "0.10.2"
+tonic-build = "0.13.1"
 
 [dev-dependencies]
 tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
