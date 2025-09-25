@@ -276,6 +276,52 @@ where
     Ok(client)
 }
 
+pub async fn connect_root(address: String, macaroon: String) -> Result<Client, ConnectError> {
+    let connector = hyper_rustls::HttpsConnectorBuilder::new()
+        .with_platform_verifier()
+        .https_or_http()
+        .enable_http2()
+        .build();
+
+    let svc_client =
+        hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+            .build(connector);
+
+    let svc = InterceptedService::new(svc_client, MacaroonInterceptor { macaroon });
+
+    let uri =
+        Uri::from_str(address.as_str()).map_err(|error| InternalConnectError::InvalidAddress {
+            address,
+            error: Box::new(error),
+        })?;
+
+    let client = Client {
+        #[cfg(feature = "lightningrpc")]
+        lightning: lnrpc::lightning_client::LightningClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "walletrpc")]
+        wallet: walletrpc::wallet_kit_client::WalletKitClient::with_origin(
+            svc.clone(),
+            uri.clone(),
+        ),
+        #[cfg(feature = "peersrpc")]
+        peers: peersrpc::peers_client::PeersClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "signrpc")]
+        signer: signrpc::signer_client::SignerClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "versionrpc")]
+        version: verrpc::versioner_client::VersionerClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "routerrpc")]
+        router: routerrpc::router_client::RouterClient::with_origin(svc.clone(), uri.clone()),
+        #[cfg(feature = "invoicesrpc")]
+        invoices: invoicesrpc::invoices_client::InvoicesClient::with_origin(
+            svc.clone(),
+            uri.clone(),
+        ),
+        #[cfg(feature = "staterpc")]
+        state: staterpc::state_client::StateClient::with_origin(svc.clone(), uri.clone()),
+    };
+    Ok(client)
+}
+
 mod tls {
     use crate::error::{ConnectError, InternalConnectError};
     use rustls::client::danger::ServerCertVerifier;
